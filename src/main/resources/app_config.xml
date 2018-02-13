@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+             xmlns:mvc="http://www.springframework.org/schema/mvc"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+         http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <beans:bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+                destroy-method="close">
+        <beans:property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <beans:property name="url"
+                        value="jdbc:mysql://localhost:3306/world" />
+        <beans:property name="username" value="root" />
+        <beans:property name="password" value="root" />
+    </beans:bean>
+
+    <beans:bean id="hibernate5AnnotatedSessionFactory"
+                class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <beans:property name="dataSource" ref="dataSource" />
+        <beans:property name="annotatedClasses">
+            <beans:list>
+                <beans:value>springBootApp.entities.CountryEntity</beans:value>
+            </beans:list>
+        </beans:property>
+        <beans:property name="hibernateProperties">
+            <beans:props>
+                <beans:prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect
+                </beans:prop>
+                <beans:prop key="hibernate.show_sql">false</beans:prop>
+                <beans:prop key="hibernate.connection.url">jdbc:mysql://localhost:3306/world</beans:prop>
+                <beans:prop key="hibernate.connection.driver_class">com.mysql.jdbc.Driver</beans:prop>
+            </beans:props>
+        </beans:property>
+    </beans:bean>
+
+    <beans:bean id="amqConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <beans:constructor-arg index="0" value="tcp://localhost:61616" />
+    </beans:bean>
+
+    <beans:bean id="connectionFactory"
+          class="org.springframework.jms.connection.SingleConnectionFactory">
+        <beans:constructor-arg ref="amqConnectionFactory" />
+    </beans:bean>
+
+    <beans:bean id="destinationQueue" class="org.apache.activemq.command.ActiveMQQueue">
+        <beans:constructor-arg index="0" value="IN_QUEUE" />
+    </beans:bean>
+
+    <beans:bean id="customMessageConverter" class="springBootApp.messaging.convertors.JmsMessageConverter" />
+
+    <beans:bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <beans:property name="connectionFactory" ref="connectionFactory" />
+        <beans:property name="defaultDestination" ref="destinationQueue" />
+        <beans:property name="messageConverter" ref="customMessageConverter" />
+    </beans:bean>
+
+    <beans:bean id="messageSender" class="springBootApp.messaging.senders.JmsMessageSender">
+        <beans:property name="queue" ref="destinationQueue" />
+        <beans:property name="jmsTemplate" ref="jmsTemplate" />
+        <beans:property name="messageConverter" ref="customMessageConverter" />
+    </beans:bean>
+
+    <beans:bean id="messageListener" class="springBootApp.messaging.listeners.TicketMessageListener">
+        <beans:property name="jmsTemplate" ref="jmsTemplate" />
+        <beans:property name="queue" ref="destinationQueue" />
+    </beans:bean>
+
+    <beans:bean id="jmsContainer"
+          class="org.springframework.jms.listener.DefaultMessageListenerContainer">
+        <beans:property name="connectionFactory" ref="connectionFactory" />
+        <beans:property name="destinationName" value="IN_QUEUE" />
+        <beans:property name="messageListener" ref="messageListener" />
+    </beans:bean>
+
+    <beans:bean id="countryDAO" class="springBootApp.dao.CountryDAO">
+        <beans:property name="sessionFactory" ref="hibernate5AnnotatedSessionFactory" />
+    </beans:bean>
+
+    <beans:bean id="sessionSecurity" class="springBootApp.security.SessionSecurity" scope="singleton"/>
+
+    <beans:bean id="countryService" class="springBootApp.service.CountryService">
+        <beans:property name="countryDAO" ref="countryDAO"/>
+        <beans:property name="sessionSecurity" ref="sessionSecurity"/>
+        <beans:property name="jmsMessageSender" ref="messageSender"/>
+    </beans:bean>
+
+    <context:component-scan base-package="springBootApp" />
+
+    <mvc:resources mapping="/static/**" location="classpath:/static/"/>
+
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
+
+    <beans:bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <beans:property name="sessionFactory" ref="hibernate5AnnotatedSessionFactory" />
+    </beans:bean>
+
+</beans:beans>
