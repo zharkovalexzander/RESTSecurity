@@ -1,7 +1,6 @@
 package springBootApp.service;
 
 import org.springframework.stereotype.Service;
-import springBootApp.dao.BasicBehavior;
 import springBootApp.entities.BasicEntity;
 
 import java.util.List;

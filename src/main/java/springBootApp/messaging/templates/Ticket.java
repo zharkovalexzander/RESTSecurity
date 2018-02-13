@@ -4,8 +4,6 @@ public class Ticket {
     private String topic;
     private String description;
 
-    public Ticket() {}
-
     public Ticket(String topic, String description) {
         this.topic = topic;
         this.description = description;
