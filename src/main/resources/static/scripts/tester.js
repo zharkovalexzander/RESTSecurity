@@ -77,8 +77,8 @@ let AuthView = React.createClass({
         return (
             React.createElement('div', {
                 className: 'back',
-                "data-vide-bg": "mp4: static/media/video",
-                "data-vide-options": "loop: true, muted: true, position: 0% 0%",
+                "data-vide-bg": "mp4: static/media/video, poster: static/media/172571-min",
+                "data-vide-options": "posterType: jpg, loop: true, muted: true, position: 0% 0%",
             }, React.createElement('div', {
                     className: 'fader'
                 },
