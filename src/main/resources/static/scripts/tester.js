@@ -14,14 +14,43 @@ $(document).ready(function() {
                 newAuth: Object.assign({}, credentials)
             });
         } else {
-            ReactDOM.render(
-                React.createElement('div', {}, 'authorized'),
-                document.getElementById('root')
-            );
+            $("#loader").remove();
+            let request = new RequestBuilder();
+            request.addUrl("http://localhost:8080")
+                .addResource("countries")
+                .addValues("t", security.getToken())
+                .buildRequest();
+            request.perform("POST", "text", function (data) {
+                let counties = JSON.parse(data).filter(country => country["url"] != null);
+                let divStyle = {
+                    background: '',
+                    backgroundSize: '100%',
+                    backgroundPosition: '0px -25px',
+                };
+                let elems = [];
+                for (let i = 0; i < counties.length; ++i) {
+                    divStyle.background = 'url("' + counties[i]["url"] + '") no-repeat';
+                    let CountryComponent = React.createClass({
+                        render: function () {
+                            return (React.createElement('div', {
+                                        className: "country"
+                                    }, React.createElement('div', {
+                                        className: "but",
+                                    })
+                                )
+                            )
+                        }
+                    });
+                    elems.push(CountryComponent);
+                }
+                ReactDOM.render(
+                    elems[0],
+                    document.getElementById('root')
+                );
+            });
         }
-    })
+    });
 });
-
 
 let AuthForm = React.createClass({
     propTypes: {
@@ -138,15 +167,6 @@ function submitNewAuth() {
         security.perform(true, function (data) {
             //alert(data);
         });
-        /*security = new RestSecurity("http://localhost:8080/auth");
-        security.addCredits("name", auth.name);
-        security.addCredits("code", auth.code);
-        security.perform(false, function (output) {
-            ReactDOM.render(
-                React.createElement('div', {}, output),
-                document.getElementById('root')
-            );
-        });*/
     }
 }
 

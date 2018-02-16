@@ -21,7 +21,18 @@ public class CountryEntity extends BasicEntity implements Serializable, Cloneabl
     private String headOfState;
     private Integer capital;
     private String code2;
+    private String url;
     private Long id;
+
+    @Basic
+    @Column(name = "url")
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     @Basic
     @Column(name = "Code")
@@ -191,6 +202,7 @@ public class CountryEntity extends BasicEntity implements Serializable, Cloneabl
 
         CountryEntity that = (CountryEntity) o;
 
+        if (url != null ? !url.equals(that.url) : that.url != null) return false;
         if (code != null ? !code.equals(that.code) : that.code != null) return false;
         if (name != null ? !name.equals(that.name) : that.name != null) return false;
         if (continent != null ? !continent.equals(that.continent) : that.continent != null) return false;
@@ -230,6 +242,7 @@ public class CountryEntity extends BasicEntity implements Serializable, Cloneabl
         result = 31 * result + (capital != null ? capital.hashCode() : 0);
         result = 31 * result + (code2 != null ? code2.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (url != null ? url.hashCode() : 0);
         return result;
     }
 

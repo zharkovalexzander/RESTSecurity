@@ -1,0 +1,65 @@
+.country {
+    width: 100%;
+    height: 250px;
+    float: left;
+    z-index: 1;
+}
+
+.but {
+    margin-left: auto;
+    margin-right: auto;
+    height: auto;
+    width: 150px;
+    margin-top: 75px;
+    display: block;
+    padding: 1em 2em;
+    border: 4px solid white;
+    color: white;
+    border-radius: 75px;
+    background: rgba(0, 0, 0, 0);
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 1;
+    text-align: center;
+    line-height: 25px;
+    font-family: "Franklin Gothic Medium", "Franklin Gothic", "ITC Franklin Gothic", Arial, sans-serif;
+}
+
+.but:hover {
+    animation: wave;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes wave {
+    to {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+@-o-keyframes wave {
+    to {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+@-ms-keyframes wave {
+    to {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+@-webkit-keyframes wave {
+    to {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+@-moz-keyframes wave {
+    to {
+        background: rgba(0, 0, 0, 0.6);
+    }
+}
+
+
+
