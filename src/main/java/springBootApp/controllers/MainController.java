@@ -52,4 +52,10 @@ public class MainController {
         return this.countryService.removeSession(token);
     }
 
+    @RequestMapping(value = "/check", method = RequestMethod.GET)
+    public @ResponseBody
+    String check(@RequestParam("t") String token) {
+        return this.countryService.checkSession(token);
+    }
+
 }

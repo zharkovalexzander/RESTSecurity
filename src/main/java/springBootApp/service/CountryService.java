@@ -6,6 +6,7 @@ import springBootApp.dao.CountryDAO;
 import springBootApp.entities.CountryEntity;
 import springBootApp.messaging.senders.JmsMessageSender;
 import springBootApp.messaging.templates.Ticket;
+import springBootApp.respond.Code;
 import springBootApp.security.SessionCredentials;
 import springBootApp.security.SessionSecurity;
 
@@ -85,7 +86,7 @@ public class CountryService implements CountryServiceQualifier {
             } else {
                 this.jmsMessageSender.sendFormattedTicket(new Ticket("SERVER",
                         "The user is authorized."));
-                session = "20"; //authorized
+                session = Code.AUTHORIZED.getEquivalence(); //authorized
             }
         }
         return session;
@@ -94,8 +95,17 @@ public class CountryService implements CountryServiceQualifier {
     @Override
     public String removeSession(String token) {
         if (sessionSecurity.removeSession(token)) {
-            return "21"; //success
+            return Code.SUCCESS.getEquivalence(); //success
         }
-        return "30"; //invalid data
+        return Code.INVALID_INPUT_DATA.getEquivalence(); //invalid data
+    }
+
+    @Override
+    public String checkSession(String token) {
+        boolean existence = this.sessionSecurity.sessionExists(token);
+        if(existence) {
+            return Code.AUTHORIZED.getEquivalence();
+        }
+        return Code.NO_CONTENT_AVAILABLE.getEquivalence();
     }
 }

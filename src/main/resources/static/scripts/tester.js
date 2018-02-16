@@ -1,4 +1,27 @@
-let mainText = "Check out a new opportunity to discover the world. Just log in for the journey!"
+let mainText = "Check out a new opportunity to discover the world. Just log in for the journey!";
+let security = null;
+let credentials = {
+    name: "",
+    code: ""
+};
+let state = {};
+
+$(document).ready(function() {
+    security = new RestSecurity();
+    security.loadToken(function (out) {
+        if(out === "") {
+            setState({
+                newAuth: Object.assign({}, credentials)
+            });
+        } else {
+            ReactDOM.render(
+                React.createElement('div', {}, 'authorized'),
+                document.getElementById('root')
+            );
+        }
+    })
+});
+
 
 let AuthForm = React.createClass({
     propTypes: {
@@ -95,29 +118,35 @@ let AuthView = React.createClass({
     },
 });
 
-let credentials = {
-    name: "",
-    code: ""
-};
-let state = {};
-
 function updateNewAuth(auth) {
     setState({
         newAuth: auth
     });
 }
 
-
 function submitNewAuth() {
-    var auth = Object.assign({}, state.newAuth);
+    let auth = Object.assign({}, state.newAuth);
 
     if (auth.name && auth.code) {
-        let security = new RestSecurity("http://localhost:8080/auth");
+        let request = new RequestBuilder();
+        request.addUrl("http://localhost:8080")
+            .addResource("auth")
+            .addValues("name", auth.name)
+            .addValues("code", auth.code)
+            .buildRequest();
+        security.addData(request);
+        security.perform(true, function (data) {
+            //alert(data);
+        });
+        /*security = new RestSecurity("http://localhost:8080/auth");
         security.addCredits("name", auth.name);
         security.addCredits("code", auth.code);
         security.perform(false, function (output) {
-            alert(output);
-        });
+            ReactDOM.render(
+                React.createElement('div', {}, output),
+                document.getElementById('root')
+            );
+        });*/
     }
 }
 
@@ -132,7 +161,3 @@ function setState(changes) {
         document.getElementById('root')
     );
 }
-
-setState({
-    newAuth: Object.assign({}, credentials)
-});

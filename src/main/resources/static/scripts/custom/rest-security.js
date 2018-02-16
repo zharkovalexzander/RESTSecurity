@@ -6,10 +6,6 @@ class Pair {
         this.value = value;
     }
 
-    static createPair(key, value) {
-        return new Pair(key, value);
-    }
-
     getKey() {
         return this.key;
     }
@@ -54,6 +50,15 @@ class ListOfPairs {
         }
     }
 
+    merge(listPairs) {
+        for(let i = 0; i < listPairs.size; ++i) {
+            if(!this.isPresent(listPairs.list[i].getKey())) {
+                this.list[this.size++] = new Pair(listPairs.list[i].getKey(),
+                    listPairs.list[i].getValue());
+            }
+        }
+    }
+
     length() {
         return this.size;
     }
@@ -65,6 +70,11 @@ class ListOfPairs {
             }
         }
         return false;
+    }
+
+    clear() {
+        this.size = 0;
+        this.list = [];
     }
 
     format() {
@@ -80,29 +90,125 @@ class ListOfPairs {
     }
 }
 
+class RequestBuilder {
+    constructor() {
+        this.url = "";
+        this.path = "";
+        this.data = new ListOfPairs();
+        this.pathIsBuilt = false;
+    }
+
+    addUrl(url) {
+        this.url = url;
+        return this;
+    }
+
+    addResource(resource) {
+        this.path = this.path + "/" + resource;
+        return this;
+    }
+
+    buildRequest() {
+        this.pathIsBuilt = true;
+        return this;
+    }
+
+    addValues(key, value) {
+        this.data.add(key, value);
+        return this;
+    }
+
+    clear() {
+        this.url = "";
+        this.path = "";
+        this.data.clear();
+        this.pathIsBuilt = false;
+        return this;
+    }
+
+    perform(method, dataType, success = function (data) {}, error = function(data) {}) {
+        if(!this.pathIsBuilt) {
+            console.log("Class wasn`t built!");
+            return;
+        }
+        let path = this.url + this.path;
+        let creds = this.data.format();
+        $.ajax({
+            type: method,
+            url: path,
+            data: creds,
+            dataType: dataType,
+            success: function (msg) {
+                success(msg);
+            },
+            error: function (msg) {
+                error(msg);
+            }
+        });
+    }
+}
+
+function saveToken(token, tokenLocalSavingIsEnabled, security) {
+    security.token = token;
+    if (tokenLocalSavingIsEnabled) {
+        localStorage.setItem("token", token);
+    }
+}
+
+function loadToken(func = function (out) {}) {
+    let token = localStorage.getItem("token");
+    token = (token == null) ? "" : token;
+    let request = new RequestBuilder();
+    request.addUrl("http://localhost:8080")
+        .addResource("check")
+        .addValues("t", token)
+        .buildRequest();
+    request.perform("GET", "text", function (out) {
+        switch (out) {
+            case "22":
+                localStorage.removeItem("t");
+                security.token = "";
+                break;
+            default:
+                security.token = token;
+                break;
+        }
+        func(security.token);
+    });
+}
+
 class RestSecurity {
-    constructor(authURL) {
-        this.credentials = new ListOfPairs();
-        this.authURL = authURL;
+    constructor() {
+        this.data = null;
         this.token = "";
     }
 
-    addCredits(key, value) {
-        this.credentials.add(key, value);
+    loadToken(func = function (out) {}) {
+        loadToken(func);
     }
 
-    saveToken(token, tokenLocalSavingIsEnabled) {
-        this.token = token;
-        if (tokenLocalSavingIsEnabled) {
-            localStorage.setItem("token", token);
-        }
+    addData(data) {
+        this.data = data;
     }
 
-    perform(tokenLocalSavingIsEnabled, outputDelegate) {
-        let url = this.authURL;
-        let credits = this.credentials.format();
-        let local_token = "";
+    perform(tokenLocalSavingIsEnabled,
+            oSD = function (out) {},
+            oED = function (out) {}) {
         let obj = this;
+        this.data.perform("POST",
+            "text",
+            function (data) {
+                if (data !== "20") {
+                    saveToken(data, tokenLocalSavingIsEnabled, obj);
+                    oSD(data);
+                }
+            },
+            function (data) {
+                oED(data);
+            });
+
+        /*let url = this.authURL;
+        let credits = this.credentials.format();
         $.ajax({
             type: "POST",
             url: url,
@@ -110,7 +216,7 @@ class RestSecurity {
             dataType: "text",
             success: function (msg) {
                 if (msg !== "20") {
-                    obj.saveToken(msg, tokenLocalSavingIsEnabled);
+                    obj::saveToken(msg, tokenLocalSavingIsEnabled);
                     outputDelegate(msg);
                 }
             },
@@ -121,11 +227,10 @@ class RestSecurity {
                         break;
                 }
             }
-        });
+        });*/
     }
 
     getToken() {
         return this.token;
     }
-
 }

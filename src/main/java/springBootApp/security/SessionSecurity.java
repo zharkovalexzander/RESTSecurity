@@ -2,7 +2,10 @@ package springBootApp.security;
 
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
+import springBootApp.messaging.senders.JmsMessageSender;
+import springBootApp.messaging.templates.Ticket;
 import springBootApp.security.encryption.Encryption;
 import springBootApp.security.stereotype.CheckLifetime;
 
@@ -10,20 +13,18 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Component
-@Aspect
 public class SessionSecurity {
-    private static SessionSecurity ourInstance = new SessionSecurity();
-
     private long lifeTime;
     private List<UserSession> userSessionsList;
+    private JmsMessageSender jmsMessageSender;
 
-    private SessionSecurity() {
-        this.userSessionsList = new LinkedList<>();
-        this.lifeTime = 1800000;
+    public void setJmsMessageSender(JmsMessageSender jmsMessageSender) {
+        this.jmsMessageSender = jmsMessageSender;
     }
 
-    public static SessionSecurity getInstance() {
-        return ourInstance;
+    public SessionSecurity() {
+        this.userSessionsList = new LinkedList<>();
+        this.lifeTime = 1800000;
     }
 
     public void setLifeTime(long lifeTime, TimeQualifier timeQualifier) {
@@ -33,6 +34,7 @@ public class SessionSecurity {
 
     @CheckLifetime
     public String newSession(SessionCredentials sessionCredentials) {
+        removeOld();
         String token = Encryption.oneStepEncryption();
         UserSession userSession = new UserSession(lifeTime)
                 .setToken(token).addCredentials(sessionCredentials);
@@ -42,6 +44,7 @@ public class SessionSecurity {
 
     @CheckLifetime
     public boolean sessionExists(String token) {
+        removeOld();
         for (UserSession userSession : this.userSessionsList) {
             if (userSession.tokenEquals(token)) {
                 return true;
@@ -52,6 +55,7 @@ public class SessionSecurity {
 
     @CheckLifetime
     public boolean credentialsArePresent(SessionCredentials sessionCredentials) {
+        removeOld();
         for (UserSession userSession : this.userSessionsList) {
             if (userSession.getCredentials().exists(sessionCredentials)) {
                 return true;
@@ -60,14 +64,11 @@ public class SessionSecurity {
         return false;
     }
 
-    @CheckLifetime
     public boolean removeSession(String token) {
-        System.out.println("a:Size" + this.userSessionsList.size() + "\n");
+        removeOld();
         if (sessionExists(token)) {
-            System.out.println("a:Token Exists\n");
             for (UserSession userSession : this.userSessionsList) {
                 if (userSession.tokenEquals(token)) {
-                    System.out.println("a:Token Found\n");
                     this.userSessionsList.remove(userSession);
                     return true;
                 }
@@ -80,7 +81,6 @@ public class SessionSecurity {
         return lifeTime;
     }
 
-    @Before("execution (@springBootApp.security.stereotype.CheckLifetime * *(..))")
     public void removeOld() {
         for (UserSession session : this.userSessionsList) {
             System.out.println("alive: " + session.isStillAlive());
