@@ -1,174 +1,133 @@
 let mainText = "Check out a new opportunity to discover the world. Just log in for the journey!";
 let security = null;
-let credentials = {
-    name: "",
-    code: ""
-};
-let state = {};
+
+function renderCountries() {
+    $("#loader").remove();
+    let request = new RequestBuilder();
+    request.addUrl("http://localhost:8080")
+        .addResource("countries")
+        .addValues("t", security.getToken())
+        .buildRequest();
+    request.perform("POST", "text", function (data) {
+        let counties = JSON.parse(data).filter(country => country["url"] != null);
+        let countriesList = [];
+        for (let i = 0; i < counties.length; ++i) {
+            countriesList.push(<div className="country"
+                                    style={
+                                        { background: 'url("' + counties[i][ "url"] + '") no-repeat 0px -25px / 100%' }
+                                    }>
+                    <div className="but"
+                         dangerouslySetInnerHTML={
+                             {__html: "Visit <br/>" + counties[i][ "name"]}
+                         }>
+                    </div>
+                </div>
+            );
+        }
+
+        class CountryContainer extends React.Component {
+            constructor(props) {
+                super(props);
+            }
+
+            render() {
+                return countriesList;
+            }
+        }
+
+        ReactDOM.render(
+            <CountryContainer/>,
+            document.getElementById('root')
+        )
+    });
+}
 
 $(document).ready(function() {
     security = new RestSecurity();
     security.loadToken(function (out) {
         if(out === "") {
-            setState({
-                newAuth: Object.assign({}, credentials)
-            });
+            ReactDOM.render(
+                <AuthForm/>,
+                document.getElementById('root')
+            );
         } else {
-            $("#loader").remove();
-            let request = new RequestBuilder();
-            request.addUrl("http://localhost:8080")
-                .addResource("countries")
-                .addValues("t", security.getToken())
-                .buildRequest();
-            request.perform("POST", "text", function (data) {
-                let counties = JSON.parse(data).filter(country => country["url"] != null);
-                for (let i = 0; i < counties.length; ++i) {
-                    ReactDOM.render(
-                        React.createElement('div', {
-                            className: "country",
-                            style: {
-                                background: 'url("' + counties[i]["url"] + '") no-repeat 0px -25px / 100%'
-                            }
-                        }, React.createElement('div', {
-                            className: "but",
-                        }, "Visit",
-                            React.createElement('br', {}),
-                            counties[i]["name"])
-                        ),
-                        document.getElementById('root')
-                    )
-                }
-            });
+            renderCountries();
         }
     });
 });
 
-let AuthForm = React.createClass({
-    propTypes: {
-        value: React.PropTypes.object.isRequired,
-        onChange: React.PropTypes.func.isRequired,
-        onSubmit: React.PropTypes.func.isRequired
-    },
+class AuthForm extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            name: '',
+            code: ''
+        };
+        this.onNameChange = this.onNameChange.bind(this);
+        this.onCodeChange = this.onCodeChange.bind(this);
+        this.onSubmit = this.onSubmit.bind(this);
+    }
 
-    onNameChange: function (e) {
-        this.props.onChange(Object.assign({}, this.props.value, {
-            name: e.target.value
-        }));
-    },
+    onNameChange(event) {
+        this.setState({name: event.target.value, code: this.state.code});
+    }
 
-    onCodeChange: function (e) {
-        this.props.onChange(Object.assign({}, this.props.value, {
-            code: e.target.value
-        }));
-    },
+    onCodeChange(event) {
+        this.setState({name: this.state.name, code: event.target.value});
+    }
 
-    onSubmit: function (e) {
-        e.preventDefault();
-        this.props.onSubmit();
-    },
+    onSubmit(event) {
+        event.preventDefault();
+        if (this.state.name && this.state.code) {
+            let request = new RequestBuilder();
+            request.addUrl("http://localhost:8080")
+                .addResource("auth")
+                .addValues("name", this.state.name)
+                .addValues("code", this.state.code)
+                .buildRequest();
+            security.addData(request);
+            security.perform(true, function (data) {
+                if(data != "30") {
+                    renderCountries();
+                }
+            });
+        }
+    }
 
-    render: function () {
-        return (
-            React.createElement('form', {
-                    onSubmit: this.onSubmit,
-                    className: 'AuthForm',
-                    noValidate: true
-                },
-                React.createElement('div', {
-                    className: 'i i_name',
-                    type: 'text',
-                }, "OPEN YOUR MIND"),
-                React.createElement('div', {
-                    className: 'parag',
-                    type: 'text',
-                }, mainText),
-                React.createElement('input', {
-                    className: 'i inputs',
-                    type: 'text',
-                    placeholder: 'Name',
-                    value: this.props.value.name,
-                    onChange: this.onNameChange,
-                }),
-                React.createElement('input', {
-                    className: 'i inputs',
-                    type: 'text',
-                    placeholder: 'Code',
-                    value: this.props.value.code,
-                    onChange: this.onCodeChange,
-                }),
-                React.createElement('button', {
-                    type: 'submit',
-                    className: 'button'
-                }, 'Log in')
-            )
-        );
-    },
-});
-
-let AuthView = React.createClass({
-    propTypes: {
-        newAuth: React.PropTypes.object.isRequired,
-        onNewCreditsChange: React.PropTypes.func.isRequired,
-        onNewCreditsSubmit: React.PropTypes.func.isRequired,
-    },
-
-    componentDidMount: function () {
+    componentDidMount() {
         $("#loader").remove();
-    },
+    }
 
-    render: function () {
+    render() {
         return (
-            React.createElement('div', {
-                className: 'back',
-                "data-vide-bg": "mp4: static/media/video, poster: static/media/172571-min",
-                "data-vide-options": "posterType: jpg, loop: true, muted: true, position: 0% 0%",
-            }, React.createElement('div', {
-                    className: 'fader'
-                },
-                React.createElement('div', {
-                        className: 'AuthView'
-                    },
-                    React.createElement(AuthForm, {
-                        value: this.props.newAuth,
-                        onChange: this.props.onNewCreditsChange,
-                        onSubmit: this.props.onNewCreditsSubmit,
-                    })
-                )
-            )));
-    },
-});
-
-function updateNewAuth(auth) {
-    setState({
-        newAuth: auth
-    });
-}
-
-function submitNewAuth() {
-    let auth = Object.assign({}, state.newAuth);
-
-    if (auth.name && auth.code) {
-        let request = new RequestBuilder();
-        request.addUrl("http://localhost:8080")
-            .addResource("auth")
-            .addValues("name", auth.name)
-            .addValues("code", auth.code)
-            .buildRequest();
-        security.addData(request);
-        security.perform(true, function (data) {
-            //alert(data);
-        });
+            <div className='back' style={{
+                background: "url(\"static/media/172571-min.jpg\") no-repeat",
+                backgroundSize: "100% 100%"
+            }}>
+                <div className='fader'>
+                    <div className='AuthView'>
+                        <form onSubmit={this.onSubmit} className='AuthForm' noValidate="true">
+                            <div className='i i_name' type='text'>
+                                OPEN YOUR MIND
+                            </div>
+                            <div className='parag' type='text' dangerouslySetInnerHTML={{__html: mainText}}>
+                            </div>
+                            <input className='i inputs' type='text' placeholder='Name' value={this.state.name}
+                                   onChange={this.onNameChange}/>
+                            <input className='i inputs' type='text' placeholder='Code' value={this.state.code}
+                                   onChange={this.onCodeChange}/>
+                            <button className='button' type='submit'>
+                                Log in
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
     }
 }
 
-function setState(changes) {
-    Object.assign(state, changes);
-
-    ReactDOM.render(
-        React.createElement(AuthView, Object.assign({}, state, {
-            onNewCreditsChange: updateNewAuth,
-            onNewCreditsSubmit: submitNewAuth
-        })),
-        document.getElementById('root')
-    );
-}
+ReactDOM.render(
+    <AuthForm/>,
+    document.getElementById('root')
+);
