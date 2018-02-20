@@ -122,26 +122,6 @@ function renderCountries() {
     request.perform(Method.POST, function (data) {
         let counties = JSON.parse(data).filter(country => country["url"] != null);
         let countriesList = [];
-        for (let i = 0; i < counties.length; ++i) {
-            countriesList.push(<div className="country"
-                                    style={
-                                        {
-                                            background: 'url("' + counties[i][ "url"]
-                                                + '") no-repeat 0px -25px / 100%'
-                                        }
-                                    }>
-                    <div className="but"
-                         dangerouslySetInnerHTML={
-                             {
-                                 __html: "Visit <br/>" + counties[i][ "name"]
-                             }
-                         }>
-                    </div>
-                </div>
-            );
-        }
-
-        countriesList.push(<LogoutButton/>);
 
         class CountryContainer extends React.Component {
             constructor(props) {
@@ -152,6 +132,64 @@ function renderCountries() {
                 return countriesList;
             }
         }
+
+        for (let i = 0; i < counties.length; ++i) {
+            class CountryEntity extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.onClick = this.onClick.bind(this);
+                    this.state = {
+                        background: counties[i]["url"],
+                        name: counties[i]["name"],
+                        code: counties[i]["code"],
+                        pos: i
+                    }
+                }
+
+                onClick(event) {
+                    let request = new RequestBuilder();
+                    request.addUrl("http://localhost:8080")
+                        .addResource("visit")
+                        .addValues("t", security.getToken())
+                        .addValues("code", this.state.code)
+                        .buildRequest();
+                    let position = this.state.pos;
+                    request.perform(Method.GET, function (data) {
+                        if(data == "1") {
+                            countriesList.splice(position, 1);
+                            ReactDOM.render(
+                                <CountryContainer/>,
+                                document.getElementById('root')
+                            )
+                        }
+                    });
+                }
+
+                render() {
+                    return (
+                        <div className="country"
+                             style={
+                                 {
+                                     background: 'url("' + this.state.background
+                                     + '") no-repeat 0px -25px / 100%'
+                                 }
+                             }>
+                            <div className="but"
+                                 onClick={this.onClick}
+                                 dangerouslySetInnerHTML={
+                                     {
+                                         __html: "Visit <br/>" + this.state.name
+                                     }
+                                 }>
+                            </div>
+                        </div>
+                    );
+                }
+            }
+
+            countriesList.push(<CountryEntity/>);
+        }
+        countriesList.push(<LogoutButton/>);
 
         ReactDOM.render(
             <CountryContainer/>,
