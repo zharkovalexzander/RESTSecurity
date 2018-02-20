@@ -1,11 +1,7 @@
 package springBootApp.security;
 
-import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.stereotype.Component;
 import springBootApp.messaging.senders.JmsMessageSender;
-import springBootApp.messaging.templates.Ticket;
 import springBootApp.security.encryption.Encryption;
 import springBootApp.security.stereotype.CheckLifetime;
 
@@ -35,7 +31,7 @@ public class SessionSecurity {
     @CheckLifetime
     public String newSession(SessionCredentials sessionCredentials) {
         removeOld();
-        String token = Encryption.oneStepEncryption();
+        String token = Encryption.INSTANCE.threeStepEncryptionWithSalt();
         UserSession userSession = new UserSession(lifeTime)
                 .setToken(token).addCredentials(sessionCredentials);
         this.userSessionsList.add(userSession);

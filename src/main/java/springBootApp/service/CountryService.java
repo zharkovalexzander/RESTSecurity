@@ -95,9 +95,9 @@ public class CountryService implements CountryServiceQualifier {
     @Override
     public String removeSession(String token) {
         if (sessionSecurity.removeSession(token)) {
-            return Code.SUCCESS.getEquivalence(); //success
+            return Code.SUCCESS.getEquivalence(); //21
         }
-        return Code.INVALID_INPUT_DATA.getEquivalence(); //invalid data
+        return Code.INVALID_INPUT_DATA.getEquivalence(); //30
     }
 
     @Override

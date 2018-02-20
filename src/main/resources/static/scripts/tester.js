@@ -15,8 +15,7 @@ class LogoutButton extends React.Component {
             .addResource("rm")
             .addValues("t", security.getToken())
             .buildRequest();
-        security.addData(request);
-        security.perform(true, function (data) {
+        request.perform(Method.GET, function (data) {
             switch (data) {
                 case "30":
                     console.log("Invalid token. Please restart your session.");
@@ -70,7 +69,7 @@ class AuthForm extends React.Component {
                 .addValues("code", this.state.code)
                 .buildRequest();
             security.addData(request);
-            security.perform(true, function (data) {
+            security.perform(true, Method.POST, function (data) {
                 if(data !== "30") {
                     renderCountries();
                 }
@@ -120,7 +119,7 @@ function renderCountries() {
         .addResource("countries")
         .addValues("t", security.getToken())
         .buildRequest();
-    request.perform("POST", "text", function (data) {
+    request.perform(Method.POST, function (data) {
         let counties = JSON.parse(data).filter(country => country["url"] != null);
         let countriesList = [];
         for (let i = 0; i < counties.length; ++i) {
@@ -163,7 +162,10 @@ function renderCountries() {
 
 $(document).ready(function() {
     security = new RestSecurity();
-    security.loadToken(function (out) {
+    let request = new RequestBuilder();
+    request.addUrl("http://localhost:8080")
+        .addResource("check");
+    security.loadToken(request, Method.GET, function (out) {
         if(out === "") {
             ReactDOM.render(
                 <AuthForm/>,

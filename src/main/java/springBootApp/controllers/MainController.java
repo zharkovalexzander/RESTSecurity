@@ -46,7 +46,7 @@ public class MainController {
         return this.countryService.checkCredentials(name, code);
     }
 
-    @RequestMapping(value = "/rm", method = RequestMethod.POST)
+    @RequestMapping(value = "/rm", method = RequestMethod.GET)
     public @ResponseBody
     String remove(@RequestParam("t") String token) {
         return this.countryService.removeSession(token);

@@ -1,5 +1,13 @@
 'use strict';
 
+let Method = Object.freeze({
+    "POST": "POST",
+    "GET": "GET",
+    "PATCH": "PATCH",
+    "DELETE": "DELETE",
+    "PUT": "PUT"
+});
+
 class Pair {
     constructor(key, value) {
         this.key = key;
@@ -99,12 +107,16 @@ class RequestBuilder {
     }
 
     addUrl(url) {
+        if(!this.validateUrl(url)) {
+            throw "Url is not valid! Try again, please.";
+        }
         this.url = url;
         return this;
     }
 
     addResource(resource) {
-        this.path = this.path + "/" + resource;
+        let pth = resource.replace(/[^a-zA-Z0-9]/g, '');
+        this.path = this.path + "/" + pth;
         return this;
     }
 
@@ -121,12 +133,21 @@ class RequestBuilder {
     clear() {
         this.url = "";
         this.path = "";
+        return this.clearData();
+    }
+
+    clearData() {
         this.data.clear();
         this.pathIsBuilt = false;
         return this;
     }
 
-    perform(method, dataType, success = function (data) {}, error = function(data) {}) {
+    validateUrl(value) {
+        return /(?:^|[ \t])((https?:\/\/)?(?:localhost|[\w-]+(?:\.[\w-]+)+)(:\d+)?)$/gm
+            .test(value);
+    }
+
+    perform(method, success = function (data) {}, error = function(data) {}) {
         if(!this.pathIsBuilt) {
             console.log("Class wasn`t built!");
             return;
@@ -137,7 +158,7 @@ class RequestBuilder {
             type: method,
             url: path,
             data: creds,
-            dataType: dataType,
+            dataType: "text",
             success: function (msg) {
                 success(msg);
             },
@@ -155,25 +176,23 @@ function saveToken(token, tokenLocalSavingIsEnabled, security) {
     }
 }
 
-function loadToken(func = function (out) {}) {
+function loadToken(url, method, object, func = function (out) {}) {
     let token = localStorage.getItem("token");
     token = (token == null) ? "" : token;
-    let request = new RequestBuilder();
-    request.addUrl("http://localhost:8080")
-        .addResource("check")
+    url.clearData()
         .addValues("t", token)
         .buildRequest();
-    request.perform("GET", "text", function (out) {
+    url.perform(method, function (out) {
         switch (out) {
             case "22":
                 localStorage.removeItem("t");
-                security.token = "";
+                object.token = "";
                 break;
             default:
-                security.token = token;
+                object.token = token;
                 break;
         }
-        func(security.token);
+        func(object.token);
     });
 }
 
@@ -183,8 +202,8 @@ class RestSecurity {
         this.token = "";
     }
 
-    loadToken(func = function (out) {}) {
-        loadToken(func);
+    loadToken(url, method, func = function (out) {}) {
+        loadToken(url, method, this, func);
     }
 
     addData(data) {
@@ -192,11 +211,11 @@ class RestSecurity {
     }
 
     perform(tokenLocalSavingIsEnabled,
+            method,
             oSD = function (out) {},
             oED = function (out) {}) {
         let obj = this;
-        this.data.perform("POST",
-            "text",
+        this.data.perform(method,
             function (data) {
                 if (data !== "20") {
                     saveToken(data, tokenLocalSavingIsEnabled, obj);
@@ -206,28 +225,6 @@ class RestSecurity {
             function (data) {
                 oED(data);
             });
-
-        /*let url = this.authURL;
-        let credits = this.credentials.format();
-        $.ajax({
-            type: "POST",
-            url: url,
-            data: credits,
-            dataType: "text",
-            success: function (msg) {
-                if (msg !== "20") {
-                    obj::saveToken(msg, tokenLocalSavingIsEnabled);
-                    outputDelegate(msg);
-                }
-            },
-            error: function (msg) {
-                switch (msg) {
-                    case "30" :
-                        console.log("Invalid credentials were passed");
-                        break;
-                }
-            }
-        });*/
     }
 
     getToken() {
