@@ -1,60 +1,44 @@
 let mainText = "Check out a new opportunity to discover the world. Just log in for the journey!";
 let security = null;
 
-function renderCountries() {
-    $("#loader").remove();
-    let request = new RequestBuilder();
-    request.addUrl("http://localhost:8080")
-        .addResource("countries")
-        .addValues("t", security.getToken())
-        .buildRequest();
-    request.perform("POST", "text", function (data) {
-        let counties = JSON.parse(data).filter(country => country["url"] != null);
-        let countriesList = [];
-        for (let i = 0; i < counties.length; ++i) {
-            countriesList.push(<div className="country"
-                                    style={
-                                        { background: 'url("' + counties[i][ "url"] + '") no-repeat 0px -25px / 100%' }
-                                    }>
-                    <div className="but"
-                         dangerouslySetInnerHTML={
-                             {__html: "Visit <br/>" + counties[i][ "name"]}
-                         }>
-                    </div>
-                </div>
-            );
-        }
+class LogoutButton extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {};
+        this.onClick = this.onClick.bind(this);
+    }
 
-        class CountryContainer extends React.Component {
-            constructor(props) {
-                super(props);
+    onClick(event) {
+        event.preventDefault();
+        let request = new RequestBuilder();
+        request.addUrl("http://localhost:8080")
+            .addResource("rm")
+            .addValues("t", security.getToken())
+            .buildRequest();
+        security.addData(request);
+        security.perform(true, function (data) {
+            switch (data) {
+                case "30":
+                    console.log("Invalid token. Please restart your session.");
+                    break;
+                case "21":
+                    console.log("Session is removed");
+                    break;
+
             }
-
-            render() {
-                return countriesList;
-            }
-        }
-
-        ReactDOM.render(
-            <CountryContainer/>,
-            document.getElementById('root')
-        )
-    });
-}
-
-$(document).ready(function() {
-    security = new RestSecurity();
-    security.loadToken(function (out) {
-        if(out === "") {
             ReactDOM.render(
                 <AuthForm/>,
                 document.getElementById('root')
             );
-        } else {
-            renderCountries();
-        }
-    });
-});
+        });
+    }
+
+    render() {
+        return (
+            <div className="logout" onClick={this.onClick}>Log out</div>
+        )
+    }
+}
 
 class AuthForm extends React.Component {
     constructor(props) {
@@ -87,7 +71,7 @@ class AuthForm extends React.Component {
                 .buildRequest();
             security.addData(request);
             security.perform(true, function (data) {
-                if(data != "30") {
+                if(data !== "30") {
                     renderCountries();
                 }
             });
@@ -100,10 +84,12 @@ class AuthForm extends React.Component {
 
     render() {
         return (
-            <div className='back' style={{
-                background: "url(\"static/media/172571-min.jpg\") no-repeat",
-                backgroundSize: "100% 100%"
-            }}>
+            <div className='back' style={
+                {
+                    background: "url(\"static/media/172571-min.jpg\") no-repeat",
+                    backgroundSize: "100% 100%"
+                }
+            }>
                 <div className='fader'>
                     <div className='AuthView'>
                         <form onSubmit={this.onSubmit} className='AuthForm' noValidate="true">
@@ -127,7 +113,64 @@ class AuthForm extends React.Component {
     }
 }
 
-ReactDOM.render(
-    <AuthForm/>,
-    document.getElementById('root')
-);
+function renderCountries() {
+    $("#loader").remove();
+    let request = new RequestBuilder();
+    request.addUrl("http://localhost:8080")
+        .addResource("countries")
+        .addValues("t", security.getToken())
+        .buildRequest();
+    request.perform("POST", "text", function (data) {
+        let counties = JSON.parse(data).filter(country => country["url"] != null);
+        let countriesList = [];
+        for (let i = 0; i < counties.length; ++i) {
+            countriesList.push(<div className="country"
+                                    style={
+                                        {
+                                            background: 'url("' + counties[i][ "url"]
+                                                + '") no-repeat 0px -25px / 100%'
+                                        }
+                                    }>
+                    <div className="but"
+                         dangerouslySetInnerHTML={
+                             {
+                                 __html: "Visit <br/>" + counties[i][ "name"]
+                             }
+                         }>
+                    </div>
+                </div>
+            );
+        }
+
+        countriesList.push(<LogoutButton/>);
+
+        class CountryContainer extends React.Component {
+            constructor(props) {
+                super(props);
+            }
+
+            render() {
+                return countriesList;
+            }
+        }
+
+        ReactDOM.render(
+            <CountryContainer/>,
+            document.getElementById('root')
+        )
+    });
+}
+
+$(document).ready(function() {
+    security = new RestSecurity();
+    security.loadToken(function (out) {
+        if(out === "") {
+            ReactDOM.render(
+                <AuthForm/>,
+                document.getElementById('root')
+            );
+        } else {
+            renderCountries();
+        }
+    });
+});

@@ -23,6 +23,12 @@
     text-align: center;
     line-height: 25px;
     font-family: "Franklin Gothic Medium", "Franklin Gothic", "ITC Franklin Gothic", Arial, sans-serif;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .but:hover {
@@ -59,6 +65,38 @@
     to {
         background: rgba(0, 0, 0, 0.6);
     }
+}
+
+.logout {
+    z-index: 999;
+    position: fixed;
+    height: 50px;
+    width: 150px;
+    right: 10px;
+    top: 10px;
+    border-radius: 27px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 4px solid white;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    font-family: "Franklin Gothic Medium", "Franklin Gothic", "ITC Franklin Gothic", Arial, sans-serif;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    text-align: center;
+    line-height: 45px;
+}
+
+.logout:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.logout:active {
+    background: rgba(0, 0, 0, 0.5);
 }
 
 
