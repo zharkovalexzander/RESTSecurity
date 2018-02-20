@@ -28,7 +28,7 @@
         <beans:property name="dataSource" ref="dataSource" />
         <beans:property name="annotatedClasses">
             <beans:list>
-                <beans:value>springBootApp.entities.CountryEntity</beans:value>
+                <beans:value>springapp.entities.CountryEntity</beans:value>
             </beans:list>
         </beans:property>
         <beans:property name="hibernateProperties">
@@ -55,7 +55,7 @@
         <beans:constructor-arg index="0" value="IN_QUEUE" />
     </beans:bean>
 
-    <beans:bean id="customMessageConverter" class="springBootApp.messaging.convertors.JmsMessageConverter" />
+    <beans:bean id="customMessageConverter" class="springapp.messaging.convertors.JmsMessageConverter" />
 
     <beans:bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
         <beans:property name="connectionFactory" ref="connectionFactory" />
@@ -63,13 +63,13 @@
         <beans:property name="messageConverter" ref="customMessageConverter" />
     </beans:bean>
 
-    <beans:bean id="messageSender" class="springBootApp.messaging.senders.JmsMessageSender">
+    <beans:bean id="messageSender" class="springapp.messaging.senders.JmsMessageSender">
         <beans:property name="queue" ref="destinationQueue" />
         <beans:property name="jmsTemplate" ref="jmsTemplate" />
         <beans:property name="messageConverter" ref="customMessageConverter" />
     </beans:bean>
 
-    <beans:bean id="messageListener" class="springBootApp.messaging.listeners.TicketMessageListener">
+    <beans:bean id="messageListener" class="springapp.messaging.listeners.TicketMessageListener">
         <beans:property name="jmsTemplate" ref="jmsTemplate" />
         <beans:property name="queue" ref="destinationQueue" />
     </beans:bean>
@@ -81,21 +81,21 @@
         <beans:property name="messageListener" ref="messageListener" />
     </beans:bean>
 
-    <beans:bean id="countryDAO" class="springBootApp.dao.CountryDAO">
+    <beans:bean id="countryDAO" class="springapp.dao.CountryDAO">
         <beans:property name="sessionFactory" ref="hibernate5AnnotatedSessionFactory" />
     </beans:bean>
 
-    <beans:bean id="sessionSecurity" class="springBootApp.security.SessionSecurity" scope="singleton">
+    <beans:bean id="sessionSecurity" class="springapp.security.SessionSecurity" scope="singleton">
         <beans:property name="jmsMessageSender" ref="messageSender"/>
     </beans:bean>
 
-    <beans:bean id="countryService" class="springBootApp.service.CountryService">
+    <beans:bean id="countryService" class="springapp.service.CountryService">
         <beans:property name="countryDAO" ref="countryDAO"/>
         <beans:property name="sessionSecurity" ref="sessionSecurity"/>
         <beans:property name="jmsMessageSender" ref="messageSender"/>
     </beans:bean>
 
-    <context:component-scan base-package="springBootApp" />
+    <context:component-scan base-package="springapp" />
 
     <mvc:resources mapping="/static/**" location="classpath:/static/"/>
 

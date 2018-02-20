@@ -107,7 +107,7 @@ class RequestBuilder {
     }
 
     addUrl(url) {
-        if(!this.validateUrl(url)) {
+        if(!RequestBuilder.validateUrl(url)) {
             throw "Url is not valid! Try again, please.";
         }
         this.url = url;
@@ -142,7 +142,7 @@ class RequestBuilder {
         return this;
     }
 
-    validateUrl(value) {
+    static validateUrl(value) {
         return /(?:^|[ \t])((https?:\/\/)?(?:localhost|[\w-]+(?:\.[\w-]+)+)(:\d+)?)$/gm
             .test(value);
     }
@@ -183,14 +183,11 @@ function loadToken(url, method, object, func = function (out) {}) {
         .addValues("t", token)
         .buildRequest();
     url.perform(method, function (out) {
-        switch (out) {
-            case "22":
-                localStorage.removeItem("t");
-                object.token = "";
-                break;
-            default:
-                object.token = token;
-                break;
+        if (out === "22") {
+            localStorage.removeItem("t");
+            object.token = "";
+        } else {
+            object.token = token;
         }
         func(object.token);
     });

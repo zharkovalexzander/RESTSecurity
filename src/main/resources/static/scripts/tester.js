@@ -146,7 +146,7 @@ function renderCountries() {
                     }
                 }
 
-                onClick(event) {
+                onClick() {
                     let request = new RequestBuilder();
                     request.addUrl("http://localhost:8080")
                         .addResource("visit")
@@ -155,7 +155,7 @@ function renderCountries() {
                         .buildRequest();
                     let position = this.state.pos;
                     request.perform(Method.GET, function (data) {
-                        if(data == "1") {
+                        if(data === "1") {
                             countriesList.splice(position, 1);
                             ReactDOM.render(
                                 <CountryContainer/>,
